@@ -227,9 +227,9 @@ def main():
         print("No data found.")
         return
 
-    # Filter degenerate rows (zero or negative mean torque)
-    rows = [r for r in rows if r["mean_torque_Nm"] > 0.0]
-    print("Valid rows (mean_torque > 0): {}".format(len(rows)))
+    # Filter only completely degenerate rows (exactly zero ripple AND zero torque)
+    rows = [r for r in rows if not (r["mean_torque_Nm"] == 0.0 and r["torque_ripple_Nm"] == 0.0)]
+    print("Valid rows (non-degenerate): {}".format(len(rows)))
     if not rows:
         print("No valid rows after filtering.")
         return
@@ -237,9 +237,11 @@ def main():
     # ── Single-objective: maximum mean torque ─────────────────────────────────
     best_torque_row = max(rows, key=lambda r: r["mean_torque_Nm"])
 
-    # ── Single-objective: minimum ripple, restricted to top 80 % of torque ───
-    threshold       = 0.80 * best_torque_row["mean_torque_Nm"]
-    high_torque     = [r for r in rows if r["mean_torque_Nm"] >= threshold]
+    # ── Single-objective: minimum ripple within 20 % of best torque ─────────
+    best_T    = best_torque_row["mean_torque_Nm"]
+    margin    = 0.20 * abs(best_T) if best_T != 0 else 1.0
+    threshold = best_T - margin
+    high_torque = [r for r in rows if r["mean_torque_Nm"] >= threshold] or rows
     best_ripple_row = min(high_torque, key=lambda r: r["torque_ripple_Nm"])
 
     # ── Multi-objective Pareto front ──────────────────────────────────────────
@@ -255,7 +257,7 @@ def main():
 
     print("\n" + sep)
     print("SINGLE-OBJECTIVE: Minimum Torque Ripple  "
-          "(torque >= {:.2f} Nm, i.e. >= 80% of peak)".format(threshold))
+          "(torque within 20% of best = {:.2f} Nm)".format(threshold))
     print(sep)
     print_row("", best_ripple_row)
 

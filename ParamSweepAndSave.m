@@ -47,8 +47,11 @@ function ParamSweepAndSave(fluxPath, torquePath, modelPath, outCsvPath, ...
 
     u_pos  = unique(pos_f);
     u_curr = unique(curr_f);
+    % Shift positions so the table starts at 0 deg (ANSYS exports start at
+    % InitPos which is non-zero; Simulink expects 0 = unaligned position).
+    u_pos  = u_pos - min(u_pos);
     [P, C] = meshgrid(u_pos, u_curr);
-    flux_matrix = griddata(pos_f, curr_f, flux_v, P, C);
+    flux_matrix = griddata(pos_f - min(pos_f), curr_f, flux_v, P, C);
 
     % Inverted flux table: i = f(phi, theta)
     bp_flux_inv    = linspace(0, max(flux_matrix(:)), length(u_curr))';
@@ -63,7 +66,7 @@ function ParamSweepAndSave(fluxPath, torquePath, modelPath, outCsvPath, ...
     pos_t   = t_data{:,1};
     curr_t  = t_data{:,2};
     torq_v  = t_data{:,3};
-    torque_matrix = griddata(pos_t, curr_t, torq_v, P, C);
+    torque_matrix = griddata(pos_t - min(pos_t), curr_t, torq_v, P, C);
 
     % Push all lookup tables into the base workspace for Simulink
     assignin('base', 'bp_flux_inv',    bp_flux_inv);
@@ -84,36 +87,19 @@ function ParamSweepAndSave(fluxPath, torquePath, modelPath, outCsvPath, ...
     assignin('base', 'Tsim', Tsim);
     assignin('base', 'Nc',   Nc);
 
-    %% --- 3. Configure parallel pool ---
-    % parsim draws from the current parpool; create one with exactly maxWorkers.
-    existing = gcp('nocreate');
-    if isempty(existing)
-        parpool('local', maxWorkers);
-    elseif existing.NumWorkers ~= maxWorkers
-        delete(existing);
-        parpool('local', maxWorkers);
-    end
-    %% --- 4. Build all SimulationInput objects for parallel execution ---
-    % yout{1} in SRM_2DModel is the TOTAL motor torque = sum of two phase-shifted
-    % torques, each computed from the ANSYS-derived lookup table T(i, theta).
-    % Mean and ripple are extracted from this signal only.
+    %% --- 3. Build SimulationInput objects ---
+    % yout{1} = total motor torque (sum of two phase-shifted lookup-table torques)
     TOTAL_TORQUE_IDX = 1;
-
-    % thi_vec / thf_vec come from function arguments (defaults set above)
 
     [~, mdlName, ~] = fileparts(modelPath);
     load_system(modelPath);
 
-    sim_inputs  = Simulink.SimulationInput.empty;
-    pair_list   = zeros(0, 2);    % [thi, thf] for each input
+    sim_inputs = Simulink.SimulationInput.empty;
+    pair_list  = zeros(0, 2);
 
     for i = 1:length(thi_vec)
         for j = 1:length(thf_vec)
-            % Require at least 5 deg conduction window
-            if thf_vec(j) <= thi_vec(i) + 5
-                continue
-            end
-
+            if thf_vec(j) <= thi_vec(i) + 5; continue; end
             in_ij = Simulink.SimulationInput(mdlName);
             in_ij = in_ij.setVariable('thi',  thi_vec(i));
             in_ij = in_ij.setVariable('thf',  thf_vec(j));
@@ -121,24 +107,28 @@ function ParamSweepAndSave(fluxPath, torquePath, modelPath, outCsvPath, ...
             in_ij = in_ij.setVariable('Nrpm', Nrpm);
             in_ij = in_ij.setVariable('Tsim', Tsim);
             in_ij = in_ij.setVariable('Nc',   Nc);
-
-            sim_inputs(end+1) = in_ij;       %#ok<AGROW>
+            sim_inputs(end+1)  = in_ij;          %#ok<AGROW>
             pair_list(end+1,:) = [thi_vec(i), thf_vec(j)];
         end
     end
 
-    fprintf('[%s] running %d sims  (%d workers)...\n', ...
-        datestr(now,'HH:MM:SS'), length(sim_inputs), maxWorkers);
-
-    %% --- 5. Run all simulations in parallel ---
-    % TransferBaseWorkspaceVariables copies the lookup tables assigned via
-    % assignin('base',...) to every parallel worker before simulation starts.
-    outs = parsim(sim_inputs, 'ShowProgress', 'on', ...
-                  'TransferBaseWorkspaceVariables', 'on');
+    %% --- 4. Run simulations sequentially ---
+    fprintf('[%s] running %d sims sequentially...\n', ...
+        datestr(now,'HH:MM:SS'), length(sim_inputs));
+    outs_cell = cell(numel(sim_inputs), 1);
+    for k = 1:numel(sim_inputs)
+        try
+            outs_cell{k} = sim(sim_inputs(k));
+            fprintf('  sim %d/%d done\n', k, numel(sim_inputs));
+        catch ME
+            fprintf('  [WARN] sim %d failed: %s\n', k, ME.message);
+            outs_cell{k} = [];
+        end
+    end
 
     close_system(mdlName, 0);
 
-    %% --- 6. Extract metrics and write CSV ---
+    %% --- 5. Extract metrics and write CSV ---
     geom_id = make_geom_id(rotorOR_radius, rpap, spap);
 
     fid = fopen(outCsvPath, 'w');
@@ -147,14 +137,17 @@ function ParamSweepAndSave(fluxPath, torquePath, modelPath, outCsvPath, ...
                   'thi_deg,thf_deg,mean_torque_Nm,torque_ripple_Nm\n']);
 
     n_written = 0;
-    for idx = 1:length(outs)
-        if ~isempty(outs(idx).ErrorMessage)
-            fprintf('  [WARN] sim %d failed: %s\n', idx, outs(idx).ErrorMessage);
+    for idx = 1:length(outs_cell)
+        out_i = outs_cell{idx};
+        if isempty(out_i); continue; end
+        % parsim stores errors in ErrorMessage; sim throws (already caught above)
+        if isprop(out_i, 'ErrorMessage') && ~isempty(out_i.ErrorMessage)
+            fprintf('  [WARN] sim %d failed: %s\n', idx, out_i.ErrorMessage);
             continue
         end
 
         % Total motor torque = sum of 2 phase-shifted torques from lookup table
-        torque_data = outs(idx).yout{TOTAL_TORQUE_IDX}.Values.Data;
+        torque_data = out_i.yout{TOTAL_TORQUE_IDX}.Values.Data;
         % Use the latter half to skip start-up transients
         n_start = max(1, floor(length(torque_data) / 2));
         T_ss    = torque_data(n_start:end);
