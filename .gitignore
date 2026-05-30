@@ -1,0 +1,31 @@
+# ── ANSYS simulation results (auto-generated, large) ──────────────────────────
+SRM_12_8_Optim.aedtresults/
+*.aedtresults/
+
+# ── Simulink build cache ───────────────────────────────────────────────────────
+slprj/
+*.slxc
+
+# ── MATLAB autosave ────────────────────────────────────────────────────────────
+*.asv
+
+# ── Generated grid-search outputs (written by RunGridSearch.py) ───────────────
+# Per-geometry ANSYS exports
+flux_RR*.csv
+torque_RR*.csv
+# Per-geometry Simulink sweep results
+sweep_RR*.csv
+# Aggregated results and reports
+GridSearchResults.csv
+OptimizationReport.txt
+ParetoFront.png
+ParamSensitivity.png
+ThetaMap_BestGeom.png
+
+# ── Claude Code local memory (machine-specific) ───────────────────────────────
+.claude/
+
+# ── OS / editor noise ─────────────────────────────────────────────────────────
+Thumbs.db
+.DS_Store
+desktop.ini
