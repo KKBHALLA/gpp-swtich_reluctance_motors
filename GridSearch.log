@@ -1,0 +1,58 @@
+[21:19:30] START  RR49p6_RPAP0p35_SPAP0p25  Iaa=80.0A  workers=2
+[Warning: Column headers from the file were modified to make them valid MATLAB identifiers before creating variable names for the table. The original column headers are saved in
+the VariableDescriptions property.
+Set 'VariableNamingRule' to 'preserve' to use the original column headers as table variable names.] 
+[Warning: Column headers from the file were modified to make them valid MATLAB identifiers before creating variable names for the table. The original column headers are saved in
+the VariableDescriptions property.
+Set 'VariableNamingRule' to 'preserve' to use the original column headers as table variable names.] 
+{gcp requires Parallel Computing Toolbox.
+
+Error in ParamSweepAndSave (line 89)
+    existing = gcp('nocreate');
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in TestPipeline (line 38)
+ParamSweepAndSave(fluxPath, torquePath, modelPath, outPath, ...
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+} 
+[21:22:58] START  RR49p6_RPAP0p35_SPAP0p25  Iaa=80.0A  workers=2
+[Warning: Column headers from the file were modified to make them valid MATLAB identifiers before creating variable names for the table. The original column headers are saved in
+the VariableDescriptions property.
+Set 'VariableNamingRule' to 'preserve' to use the original column headers as table variable names.] 
+[Warning: Column headers from the file were modified to make them valid MATLAB identifiers before creating variable names for the table. The original column headers are saved in
+the VariableDescriptions property.
+Set 'VariableNamingRule' to 'preserve' to use the original column headers as table variable names.] 
+{gcp requires Parallel Computing Toolbox.
+
+Error in ParamSweepAndSave (line 116)
+        existing = gcp('nocreate');
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in TestPipeline (line 38)
+ParamSweepAndSave(fluxPath, torquePath, modelPath, outPath, ...
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+} 
+[21:26:03] START  RR49p6_RPAP0p35_SPAP0p25  Iaa=80.0A  workers=2
+[Warning: Column headers from the file were modified to make them valid MATLAB identifiers before creating variable names for the table. The original column headers are saved in
+the VariableDescriptions property.
+Set 'VariableNamingRule' to 'preserve' to use the original column headers as table variable names.] 
+[Warning: Column headers from the file were modified to make them valid MATLAB identifiers before creating variable names for the table. The original column headers are saved in
+the VariableDescriptions property.
+Set 'VariableNamingRule' to 'preserve' to use the original column headers as table variable names.] 
+[21:26:12] running 4 sims sequentially...
+  sim 1/4 done
+  sim 2/4 done
+  sim 3/4 done
+  sim 4/4 done
+[21:26:27] DONE   RR49p6_RPAP0p35_SPAP0p25  4 rows written
+[21:33:04] START  RR49p6_RPAP0p35_SPAP0p25  Iaa=80.0A  workers=2
+[Warning: Column headers from the file were modified to make them valid MATLAB identifiers before creating variable names for the table. The original column headers are saved in
+the VariableDescriptions property.
+Set 'VariableNamingRule' to 'preserve' to use the original column headers as table variable names.] 
+[Warning: Column headers from the file were modified to make them valid MATLAB identifiers before creating variable names for the table. The original column headers are saved in
+the VariableDescriptions property.
+Set 'VariableNamingRule' to 'preserve' to use the original column headers as table variable names.] 
+[21:33:09] running 4 sims sequentially...
+  sim 1/4 done
+  sim 2/4 done
+  sim 3/4 done
+  sim 4/4 done
+[21:33:13] DONE   RR49p6_RPAP0p35_SPAP0p25  4 rows written

@@ -1,0 +1,28 @@
+=== SRM 12/8 Pipeline Test ===
+Flux CSV  : D:\Ansys\ConsultancyWork\GPP\Design\FluxLinkage.csv
+Torque CSV: D:\Ansys\ConsultancyWork\GPP\Design\Torque.csv
+Model     : D:\Ansys\ConsultancyWork\GPP\Design\SRM_2DModel.slx
+Sweep     : thi=[10 15]  thf=[30 35]
+Workers   : 2
+
+=== SRM 12/8 Pipeline Test ===
+Flux CSV  : D:\Ansys\ConsultancyWork\GPP\Design\FluxLinkage.csv
+Torque CSV: D:\Ansys\ConsultancyWork\GPP\Design\Torque.csv
+Model     : D:\Ansys\ConsultancyWork\GPP\Design\SRM_2DModel.slx
+Sweep     : thi=[10 15]  thf=[30 35]
+Workers   : 2
+
+=== SRM 12/8 Pipeline Test ===
+Flux CSV  : D:\Ansys\ConsultancyWork\GPP\Design\FluxLinkage.csv
+Torque CSV: D:\Ansys\ConsultancyWork\GPP\Design\Torque.csv
+Model     : D:\Ansys\ConsultancyWork\GPP\Design\SRM_2DModel.slx
+Sweep     : thi=[10 15]  thf=[30 35]
+Workers   : 2
+
+=== SRM 12/8 Pipeline Test ===
+Flux CSV  : D:\Ansys\ConsultancyWork\GPP\Design\FluxLinkage.csv
+Torque CSV: D:\Ansys\ConsultancyWork\GPP\Design\Torque.csv
+Model     : D:\Ansys\ConsultancyWork\GPP\Design\SRM_2DModel.slx
+Sweep     : thi=[10 15]  thf=[30 35]
+Workers   : 2
+
