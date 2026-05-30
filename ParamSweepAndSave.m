@@ -1,5 +1,6 @@
 function ParamSweepAndSave(fluxPath, torquePath, modelPath, outCsvPath, ...
-                            rotorOR_radius, rpap, spap, iaa, maxWorkers)
+                            rotorOR_radius, rpap, spap, iaa, maxWorkers, ...
+                            thi_vec, thf_vec)
 % ParamSweepAndSave  Sweep thi/thf in Simulink for one pre-solved geometry.
 %
 %   Loads flux/torque lookup tables from ANSYS CSVs, runs the SRM_2DModel
@@ -24,10 +25,18 @@ function ParamSweepAndSave(fluxPath, torquePath, modelPath, outCsvPath, ...
 %     spap           - StatorPoleArcByPolePitch (dimensionless)
 %     iaa            - peak phase current in A (computed from slot area)
 %     maxWorkers     - number of parallel Simulink workers (default: 2)
+%     thi_vec        - turn-on  angle sweep vector, deg (default: 0:5:30)
+%     thf_vec        - turn-off angle sweep vector, deg (default: 20:5:45)
 
-    if nargin < 9 || isempty(maxWorkers)
-        maxWorkers = 2;
-    end
+    if nargin < 9  || isempty(maxWorkers); maxWorkers = 2;      end
+    if nargin < 10 || isempty(thi_vec);   thi_vec = 0:5:30;    end
+    if nargin < 11 || isempty(thf_vec);   thf_vec = 20:5:45;   end
+
+    % Append key milestones to GridSearch.log in the output directory
+    logFile = fullfile(fileparts(outCsvPath), 'GridSearch.log');
+    diary(logFile); diary on;
+    fprintf('[%s] START  %s  Iaa=%.1fA  workers=%d\n', ...
+        datestr(now,'HH:MM:SS'), make_geom_id(rotorOR_radius,rpap,spap), iaa, maxWorkers);
 
     %% --- 1. Load flux-linkage and torque lookup tables ---
     % (Same inversion logic as run_simulink_bridge_flux_torq.m)
@@ -84,16 +93,13 @@ function ParamSweepAndSave(fluxPath, torquePath, modelPath, outCsvPath, ...
         delete(existing);
         parpool('local', maxWorkers);
     end
-    fprintf('  ParamSweepAndSave: using %d parallel workers.\n', maxWorkers);
-
     %% --- 4. Build all SimulationInput objects for parallel execution ---
     % yout{1} in SRM_2DModel is the TOTAL motor torque = sum of two phase-shifted
     % torques, each computed from the ANSYS-derived lookup table T(i, theta).
     % Mean and ripple are extracted from this signal only.
     TOTAL_TORQUE_IDX = 1;
 
-    thi_vec = 0:5:30;    % turn-on angle sweep, deg
-    thf_vec = 20:5:45;   % turn-off angle sweep, deg
+    % thi_vec / thf_vec come from function arguments (defaults set above)
 
     [~, mdlName, ~] = fileparts(modelPath);
     load_system(modelPath);
@@ -121,8 +127,8 @@ function ParamSweepAndSave(fluxPath, torquePath, modelPath, outCsvPath, ...
         end
     end
 
-    fprintf('  ParamSweepAndSave: running %d Simulink simulations (%d workers)...\n', ...
-            length(sim_inputs), maxWorkers);
+    fprintf('[%s] running %d sims  (%d workers)...\n', ...
+        datestr(now,'HH:MM:SS'), length(sim_inputs), maxWorkers);
 
     %% --- 5. Run all simulations in parallel ---
     % TransferBaseWorkspaceVariables copies the lookup tables assigned via
@@ -163,7 +169,9 @@ function ParamSweepAndSave(fluxPath, torquePath, modelPath, outCsvPath, ...
     end
 
     fclose(fid);
-    fprintf('  ParamSweepAndSave: wrote %d rows to %s\n', n_written, outCsvPath);
+    fprintf('[%s] DONE   %s  %d rows written\n', ...
+        datestr(now,'HH:MM:SS'), make_geom_id(rotorOR_radius,rpap,spap), n_written);
+    diary off;
 end
 
 
